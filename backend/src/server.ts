@@ -38,6 +38,14 @@ const io = new Server(server, {
 });
 
 import { meetingSocketHandler } from './sockets/meetingSocket';
+import { mediasoupService } from './services/mediasoupService';
+
+// Initialize Mediasoup Worker
+mediasoupService.init().catch(err => {
+    console.error('Failed to init Mediasoup:', err);
+    process.exit(1);
+});
+
 meetingSocketHandler(io);
 
 const PORT = process.env.PORT || 5000;

@@ -21,7 +21,11 @@ class MediasoupService {
     private routers: Map<string, Router> = new Map(); // roomId -> Router
 
     constructor() {
-        this.startWorker();
+        // Deferred initialization to ensure env vars are loaded
+    }
+
+    public async init() {
+        await this.startWorker();
     }
 
     private async startWorker() {
