@@ -11,12 +11,12 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: 'http://210.79.129.176:5000',
         changeOrigin: true,
         secure: false,
       },
       '/socket.io': {
-        target: 'http://localhost:5000',
+        target: 'http://210.79.129.176:5000',
         changeOrigin: true,
         ws: true,
         secure: false,
