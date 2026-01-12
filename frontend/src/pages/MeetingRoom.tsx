@@ -584,18 +584,18 @@ const MeetingRoom: React.FC = () => {
                     <div className="w-full aspect-video md:h-full md:w-full md:aspect-auto relative">
                         <CustomVideoPlayer videoId={meeting.youtubeId} />
                         {/* Controls Overlay */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-4 items-center">
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-3 md:gap-4 items-center w-full justify-center px-4">
                             <button
                                 onClick={toggleMic}
-                                className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-all transform hover:scale-105 active:scale-95 border-2 ${isMicOn ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-500/50' : 'bg-red-600 border-red-400 text-white shadow-red-500/50'}`}
+                                className={`pointer-events-auto w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-all transform hover:scale-105 active:scale-95 border-2 ${isMicOn ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-500/50' : 'bg-red-600 border-red-400 text-white shadow-red-500/50'}`}
                                 title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
                             >
-                                {isMicOn ? <IconMicrophone size={28} /> : <IconMicrophoneOff size={28} />}
+                                {isMicOn ? <IconMicrophone size={20} className="md:w-7 md:h-7" /> : <IconMicrophoneOff size={20} className="md:w-7 md:h-7" />}
                             </button>
 
                             {!isHost && (
-                                <button onClick={toggleHand} className={`pointer-events-auto px-6 py-2.5 rounded-full font-bold text-sm shadow-lg flex items-center gap-2 transition transform hover:scale-105 ${isHandRaised ? 'bg-yellow-500 text-black' : 'bg-gray-900/60 text-white backdrop-blur border border-white/10 hover:bg-gray-800'}`}>
-                                    <IconHandStop size={18} /> {isHandRaised ? 'HAND RAISED' : 'RAISE HAND'}
+                                <button onClick={toggleHand} className={`pointer-events-auto px-4 py-2 md:px-6 md:py-2.5 rounded-full font-bold text-xs md:text-sm shadow-lg flex items-center gap-2 transition transform hover:scale-105 ${isHandRaised ? 'bg-yellow-500 text-black' : 'bg-gray-900/60 text-white backdrop-blur border border-white/10 hover:bg-gray-800'}`}>
+                                    <IconHandStop size={16} className="md:w-[18px]" /> {isHandRaised ? 'HAND RAISED' : 'RAISE HAND'}
                                 </button>
                             )}
                         </div>

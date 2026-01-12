@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview --port 5173 --host",
+    "start": "npm run preview"
   },
   "dependencies": {
     "@tabler/icons-react": "^3.36.1",

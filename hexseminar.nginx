@@ -2,12 +2,18 @@ server {
     listen 80;
     server_name meeting.studyhex.in;
 
-    root /var/www/hexseminar/frontend/dist;
+    # Optional: Root for static fallback (though we proxy primarily)
+    root /home/ubuntu/yt-seminar/frontend/dist; 
     index index.html;
 
-    # Frontend (SPA Support)
+    # Frontend (Proxy to Vite Server)
     location / {
-        try_files $uri $uri/ /index.html;
+        proxy_pass http://localhost:5173;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
 
     # Backend API Proxy

@@ -1,5 +1,3 @@
-#!/bin/bash
-
 # Server Setup Script (Ubuntu) for HexSeminar
 # Installs Node.js, Nginx, Certbot, PM2 and configures Firewall
 
