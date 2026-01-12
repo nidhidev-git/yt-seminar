@@ -9,6 +9,12 @@ import meetingRoutes from './routes/meeting';
 
 // Load env vars
 dotenv.config();
+console.log('Environment Variables Loaded. MONGO_URI Length:', process.env.MONGO_URI?.length || 0);
+console.log('Mediasoup Config:', {
+    minPort: process.env.MEDIASOUP_MIN_PORT,
+    maxPort: process.env.MEDIASOUP_MAX_PORT,
+    announcedIp: process.env.MEDIASOUP_ANNOUNCED_IP
+});
 
 // Connect to Database
 connectDB();
