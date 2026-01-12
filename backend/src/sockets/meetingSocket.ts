@@ -81,6 +81,14 @@ export const meetingSocketHandler = (io: Server) => {
                     effectiveRole = 'co-host';
                 }
 
+                // Prevent duplicate users (if same userId exists, remove old socket entry)
+                if (userId) {
+                    const existingUserIndex = meeting.participants.findIndex(p => p.userId === userId && p.id !== socket.id);
+                    if (existingUserIndex !== -1) {
+                        meeting.participants.splice(existingUserIndex, 1);
+                    }
+                }
+
                 // Add or update participant
                 const existingParticipant = meeting.participants.find(p => p.id === socket.id);
                 if (existingParticipant) {
