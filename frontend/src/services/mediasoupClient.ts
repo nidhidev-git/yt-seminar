@@ -140,6 +140,9 @@ class MediasoupClient {
             const audio = document.createElement('audio');
             audio.srcObject = stream;
             audio.id = `audio-${consumer.id}`;
+            audio.autoplay = true;
+            (audio as any).playsInline = true; // For iOS/Mobile
+            audio.style.display = 'none'; // Hide element
             document.body.appendChild(audio);
             audio.play().catch(e => console.error('Play error:', e));
         });

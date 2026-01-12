@@ -8,7 +8,12 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+
   server: {
+    allowedHosts: [
+      'meeting.studyhex.in',
+      '210.79.129.176',
+    ],
     proxy: {
       '/api': {
         target: 'http://210.79.129.176:5000',
@@ -22,5 +27,12 @@ export default defineConfig({
         secure: false,
       },
     },
+  },
+
+  preview: {
+    allowedHosts: [
+      'meeting.studyhex.in',
+      '210.79.129.176',
+    ],
   },
 })

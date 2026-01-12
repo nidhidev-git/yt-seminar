@@ -58,7 +58,7 @@ class MediasoupService {
     public async createWebRtcTransport(router: Router) {
         // Optimization: Explicitly undefined IPs let Mediasoup detect interface (OK for local dev)
         // For Prod: Must specify listenIps
-        const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1';
+        const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP || '210.79.129.176';
         const transport = await router.createWebRtcTransport({
             listenIps: [{ ip: '0.0.0.0', announcedIp }],
             enableUdp: true,
