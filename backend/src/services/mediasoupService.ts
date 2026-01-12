@@ -59,6 +59,9 @@ class MediasoupService {
         // Optimization: Explicitly undefined IPs let Mediasoup detect interface (OK for local dev)
         // For Prod: Must specify listenIps
         const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP || '210.79.129.176';
+        console.log('Creating WebRtcTransport with Announced IP:', announcedIp);
+        console.log('Mediasoup Port Range:', process.env.MEDIASOUP_MIN_PORT, '-', process.env.MEDIASOUP_MAX_PORT);
+
         const transport = await router.createWebRtcTransport({
             listenIps: [{ ip: '0.0.0.0', announcedIp }],
             enableUdp: true,

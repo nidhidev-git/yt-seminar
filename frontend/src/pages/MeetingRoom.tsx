@@ -122,7 +122,15 @@ const MeetingRoom: React.FC = () => {
 
         const socket = socketService.connect();
         const socketRole = user.role?.toLowerCase() === 'admin' ? 'host' : 'user';
+
+        // Handle initial join
         socket.emit('join-room', { roomId: id, name: user.name, role: socketRole, userId: user.id });
+
+        // Connection State Monitoring
+        socket.io.on("reconnect", () => {
+            console.log("Reconnected to server. Reloading to restore media state...");
+            window.location.reload();
+        });
 
         // Listeners
         socket.on('update-users', (users: Participant[]) => setParticipants(users));
@@ -144,6 +152,28 @@ const MeetingRoom: React.FC = () => {
             setMeeting((prev: any) => prev ? { ...prev, youtubeId: videoId } : null);
             addToast('Live Stream Updated', 'info');
         });
+
+        // Resilience: Reload on socket reconnection to restore Mediasoup state
+        socket.on('connect', () => {
+            // If we were already connected (e.g. recovering from a disconnect), we should reload
+            // We can check if `participants` state is populated or use a ref isMounted/hasConnected
+            console.log('Socket Connected');
+        });
+
+        socket.on('disconnect', (reason) => {
+            console.warn('Socket Disconnected:', reason);
+            addToast('Connection Lost. Reconnecting...', 'error');
+            // Optionally force reload if it doesn't recover quickly?
+            // But usually socket.io recovers. The problem is Mediasoup state is lost on server.
+
+            // If server restarted, the new socket connection is "fresh".
+            // We should listen for 'connect' event again.
+        });
+
+        // Listen for a specific "server-restarted" event? 
+        // Or just rely on the fact that existing consumers will fail?
+        // Let's force a reload if we detect a disconnect followed by connect while meeting is active.
+
         socket.on('kicked', () => {
             addToast('You have been kicked by the host.', 'error');
             navigate('/');
