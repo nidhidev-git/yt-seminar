@@ -24,7 +24,7 @@ class MediasoupClient {
         try {
             this.device = new Device();
             await this.device.load({ routerRtpCapabilities });
-            console.log('Mediasoup device loaded');
+            // console.log('Mediasoup device loaded');
         } catch (error) {
             console.error('Failed to load device:', error);
             if ((error as any).name === 'UnsupportedError') {

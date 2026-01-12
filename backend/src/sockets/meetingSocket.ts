@@ -140,6 +140,9 @@ export const meetingSocketHandler = (io: Server) => {
                 const router = await mediasoupService.getRouter(roomId);
                 const { transport, params } = await mediasoupService.createWebRtcTransport(router);
 
+                // Store socketId in appData for cleanup
+                transport.appData.socketId = socket.id;
+
                 // Store transport
                 meeting.transports.set(transport.id, transport);
 
@@ -178,7 +181,7 @@ export const meetingSocketHandler = (io: Server) => {
                 const transport = meeting.transports.get(transportId);
                 if (!transport) throw new Error(`Transport ${transportId} not found`);
 
-                const producer = await transport.produce({ kind, rtpParameters, appData });
+                const producer = await transport.produce({ kind, rtpParameters, appData: { ...appData, socketId: socket.id } });
                 meeting.producers.set(producer.id, producer);
 
                 // Announce new producer to others in room
@@ -217,6 +220,7 @@ export const meetingSocketHandler = (io: Server) => {
                     producerId,
                     rtpCapabilities,
                     paused: true, // Recommended to start paused
+                    appData: { socketId: socket.id }
                 });
 
                 meeting.consumers.set(consumer.id, consumer);
@@ -436,11 +440,35 @@ export const meetingSocketHandler = (io: Server) => {
         socket.on('disconnect', () => {
             for (const roomId in activeMeetings) {
                 const meeting = activeMeetings[roomId];
-                // Cleanup Transports/Producers for this socket?
-                // For simplicity in this iteration, we rely on Mediasoup's transport close on socket close 
-                // but strictly we should clean up producers mapped to this socket.
-                // Since our maps are flat by ID, we'd need a socket->resources map to do it efficiently.
-                // For now, Mediasoup usually cleans up transports if the connection dies.
+
+                // Cleanup Transports, Producers, Consumers for this socket
+                // We iterate and close resources where appData.socketId === socket.id
+                // Note: We need to ensure we set socketId in appData when creating them.
+
+                // 1. Close Producers
+                for (const [id, producer] of meeting.producers) {
+                    if ((producer.appData as any).socketId === socket.id) {
+                        producer.close();
+                        meeting.producers.delete(id);
+                        socket.to(roomId).emit('producer-closed', { producerId: id });
+                    }
+                }
+
+                // 2. Close Consumers
+                for (const [id, consumer] of meeting.consumers) {
+                    if ((consumer.appData as any).socketId === socket.id) {
+                        consumer.close();
+                        meeting.consumers.delete(id);
+                    }
+                }
+
+                // 3. Close Transports
+                for (const [id, transport] of meeting.transports) {
+                    if ((transport.appData as any).socketId === socket.id) {
+                        transport.close();
+                        meeting.transports.delete(id);
+                    }
+                }
 
                 const userIndex = meeting.participants.findIndex(u => u.id === socket.id);
                 if (userIndex !== -1) {
@@ -448,7 +476,7 @@ export const meetingSocketHandler = (io: Server) => {
                     io.to(roomId).emit('update-users', meeting.participants);
                 }
             }
-            console.log('Socket disconnected:', socket.id);
+            // console.log('Socket disconnected:', socket.id);
         });
     });
 };

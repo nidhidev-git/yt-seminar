@@ -164,7 +164,7 @@ const AdminDashboard: React.FC = () => {
         }
 
         // Handle various YouTube URL formats
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w+\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w+\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
         const match = urlOrId.match(regExp);
 
         return (match && match[2].length === 11) ? match[2] : urlOrId;

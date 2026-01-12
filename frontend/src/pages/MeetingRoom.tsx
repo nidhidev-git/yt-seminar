@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { API_BASE_URL } from '../config';
 import PollModal from '../components/PollModal';
-import CustomVideoPlayer from '../components/CustomVideoPlayer';
+import CustomVideoPlayer, { type VideoPlayerRef } from '../components/CustomVideoPlayer';
 import socketService from '../services/socket';
 import { mediasoupClient } from '../services/mediasoupClient';
 import { IconUsers, IconMicrophone, IconMicrophoneOff, IconHandStop, IconX, IconSettings, IconChartBar, IconSend, IconMessage, IconCrown, IconBrandYoutube, IconPlayerPlay, IconPlayerStop } from '@tabler/icons-react';
@@ -76,6 +76,39 @@ const MeetingRoom: React.FC = () => {
     const [showVideoUpdate, setShowVideoUpdate] = useState(false);
     const [videoInput, setVideoInput] = useState('');
 
+    // Video Sync Ref
+    const videoRef = useRef<VideoPlayerRef>(null);
+
+    // Video Sync Logic: Client-side "Always Live" Enforcement
+    useEffect(() => {
+        // Run this for EVERYONE (Host and Users)
+        const interval = setInterval(() => {
+            if (videoRef.current) {
+
+                // Only check if video is playing (1) or buffering (3)
+                // If paused (2), we might want to force play, but let's check user intent.
+                // User said "it should be always live", implying no pausing allowed or auto-resume.
+
+                if (videoRef.current.isLive()) {
+                    const duration = videoRef.current.getDuration();
+                    const currentTime = videoRef.current.getCurrentTime();
+                    const drift = duration - currentTime;
+
+                    // If drift > 5 seconds, force sync to live
+                    if (drift > 5) {
+                        // console.log(`Behind Live Edge by ${drift.toFixed(2)}s. Syncing to Live.`);
+                        videoRef.current.seekTo(duration); // Seek to live edge
+
+                        // Ensure it's playing if it was somehow paused
+                        // Note: seekTo usually starts playing if properly configured
+                    }
+                }
+            }
+        }, 5000); // Check every 5 seconds
+
+        return () => clearInterval(interval);
+    }, []);
+
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll on new message
@@ -133,7 +166,6 @@ const MeetingRoom: React.FC = () => {
         socket.on('role-update', (newRole: 'co-host' | 'user') => {
             if (newRole === 'co-host') addToast('You have been promoted to Co-host!', 'success');
             else addToast('You have been demoted to User.', 'info');
-            // The user list update will handle the visual role change independently
         });
 
         // Mediasoup Events
@@ -194,7 +226,7 @@ const MeetingRoom: React.FC = () => {
                     console.error('Meeting not found');
                 }
             } catch (err) {
-                console.error(err);
+                // console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -247,10 +279,17 @@ const MeetingRoom: React.FC = () => {
         setPollOptions(['Yes', 'No']);
     };
 
+    const getYoutubeId = (urlOrId: string) => {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
+        const match = urlOrId.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : urlOrId;
+    };
+
     const handleUpdateVideo = (e: React.FormEvent) => {
         e.preventDefault();
         if (!videoInput.trim()) return;
-        socketService.getSocket()?.emit('update-video-id', { roomId: id, videoId: videoInput.trim() });
+        const cleanId = getYoutubeId(videoInput.trim());
+        socketService.getSocket()?.emit('update-video-id', { roomId: id, videoId: cleanId });
         setShowVideoUpdate(false);
         setVideoInput('');
     };
@@ -282,8 +321,6 @@ const MeetingRoom: React.FC = () => {
                         const devices = await navigator.mediaDevices.enumerateDevices();
                         const inputs = devices.filter(d => d.kind === 'audioinput');
                         setAudioDevices(inputs);
-                        // Don't auto-set selectedDeviceId to avoid switching stream unexpectedly, 
-                        // unless we want to reflect what's being used.
                     } catch (e) {
                         console.warn('Failed to enumerate devices', e);
                     }
@@ -582,7 +619,7 @@ const MeetingRoom: React.FC = () => {
                 {/* Video Section: Auto height on mobile (aspect-video), Full height/flex-1 on Desktop */}
                 <div className="w-full md:flex-1 bg-black relative flex flex-col justify-center overflow-hidden shrink-0 md:h-full">
                     <div className="w-full aspect-video md:h-full md:w-full md:aspect-auto relative">
-                        <CustomVideoPlayer videoId={meeting.youtubeId} />
+                        <CustomVideoPlayer ref={videoRef} videoId={meeting.youtubeId} />
                         {/* Controls Overlay */}
                         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-3 md:gap-4 items-center w-full justify-center px-4">
                             <button

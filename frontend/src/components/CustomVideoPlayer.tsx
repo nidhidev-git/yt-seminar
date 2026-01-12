@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IconMaximize, IconMinimize, IconVolume, IconVolumeOff } from '@tabler/icons-react';
+import { IconMaximize, IconMinimize, IconVolumeOff } from '@tabler/icons-react';
 
 interface CustomVideoPlayerProps {
     videoId: string;
@@ -12,18 +12,43 @@ declare global {
     }
 }
 
-const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
+export interface VideoPlayerRef {
+    getCurrentTime: () => number;
+    getDuration: () => number;
+    seekTo: (seconds: number) => void;
+    getPlayerState: () => number;
+    isLive: () => boolean;
+}
+
+const CustomVideoPlayer = React.forwardRef<VideoPlayerRef, CustomVideoPlayerProps>(({ videoId }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const playerRef = useRef<any>(null);
-    const [isMuted, setIsMuted] = useState(true);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(false);
-    // const [playerStatus, setPlayerStatus] = useState<number>(-1); // -1: Unstarted
     const [hasError, setHasError] = useState(false);
+    const [hasInteracted, setHasInteracted] = useState(false);
+
+    // Expose methods to parent
+    React.useImperativeHandle(ref, () => ({
+        getCurrentTime: () => playerRef.current && typeof playerRef.current.getCurrentTime === 'function' ? playerRef.current.getCurrentTime() : 0,
+        getDuration: () => playerRef.current && typeof playerRef.current.getDuration === 'function' ? playerRef.current.getDuration() : 0,
+        seekTo: (seconds: number) => {
+            if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+                playerRef.current.seekTo(seconds, true);
+            }
+        },
+        getPlayerState: () => playerRef.current && typeof playerRef.current.getPlayerState === 'function' ? playerRef.current.getPlayerState() : -1,
+        isLive: () => {
+            if (playerRef.current && typeof playerRef.current.getVideoData === 'function') {
+                return playerRef.current.getVideoData().isLive;
+            }
+            return false;
+        }
+    }));
 
     // Extract ID if full URL is provided
     const getYoutubeId = (urlOrId: string) => {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|live\/)([^#&?]*).*/;
         const match = urlOrId.match(regExp);
         return (match && match[2].length === 11) ? match[2] : urlOrId;
     };
@@ -70,14 +95,15 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
                 videoId: finalVideoId,
                 playerVars: {
                     autoplay: 1,
-                    mute: 1,
+                    mute: 1, // Start muted to ensure autoplay works (browser policy)
                     controls: 0,
                     rel: 0,
                     modestbranding: 1,
                     playsinline: 1,
                     iv_load_policy: 3,
                     showinfo: 0,
-                    enablejsapi: 1
+                    enablejsapi: 1,
+                    origin: window.location.origin
                 },
                 events: {
                     'onReady': onPlayerReady,
@@ -88,11 +114,15 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
         };
 
         const onPlayerReady = (event: any) => {
+            // Check if user has already interacted (e.g. quick click) ?? 
+            // Actually, we must start muted. 
+            // If hasInteracted is true (maybe re-render?), we can try to unmute.
+            // But relying on click is safest.
             event.target.playVideo();
         };
 
         const onPlayerStateChange = (_event: any) => {
-            // if (isMounted) setPlayerStatus(event.data);
+            // Optional state handling
         };
 
         const onPlayerError = (event: any) => {
@@ -104,25 +134,11 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
 
         return () => {
             isMounted = false;
-            // Don't destroy immediately on unmount to prevent flash if re-rendering, 
-            // but here we want to cleanup if ID changes.
             if (playerRef.current && playerRef.current.destroy) {
-                // playerRef.current.destroy(); // Optional, sometimes causes issues with React HMR
+                // playerRef.current.destroy(); 
             }
         };
     }, [finalVideoId]);
-
-    const toggleMute = () => {
-        if (playerRef.current && playerRef.current.isMuted) {
-            if (playerRef.current.isMuted()) {
-                playerRef.current.unMute();
-                setIsMuted(false);
-            } else {
-                playerRef.current.mute();
-                setIsMuted(true);
-            }
-        }
-    };
 
     const toggleFullscreen = () => {
         if (!document.fullscreenElement) {
@@ -152,8 +168,42 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
             {/* Player Container */}
             <div id="youtube-player" className="w-full h-full pointer-events-none"></div>
 
-            {/* Transparent Interaction Shield */}
-            <div className="absolute inset-0 z-10 w-full h-full"></div>
+            {/* Interaction Overlay (Start Meeting) */}
+            {!hasInteracted && !hasError && (
+                <div
+                    className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center cursor-pointer transition-opacity duration-300"
+                    onClick={() => {
+                        setHasInteracted(true);
+                        if (playerRef.current) {
+                            if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
+                            if (typeof playerRef.current.playVideo === 'function') playerRef.current.playVideo();
+                        }
+                    }}
+                >
+                    <div className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-full font-bold text-lg shadow-[0_0_30px_rgba(79,70,229,0.5)] transform hover:scale-105 transition-all flex items-center gap-3 animate-pulse">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Start Meeting
+                    </div>
+                    <p className="text-gray-400 mt-4 text-sm font-medium">Click to join audio and video</p>
+                </div>
+            )}
+
+            {/* Transparent Interaction Shield (only when playing) */}
+            {hasInteracted && (
+                <div
+                    className="absolute inset-0 z-10 w-full h-full"
+                    // Keep global click to ensure unmute/play just in case
+                    onClick={() => {
+                        if (playerRef.current) {
+                            if (typeof playerRef.current.unMute === 'function') playerRef.current.unMute();
+                            if (typeof playerRef.current.playVideo === 'function') playerRef.current.playVideo();
+                        }
+                    }}
+                ></div>
+            )}
 
             {/* Error / Offline Overlay */}
             {hasError && (
@@ -164,17 +214,11 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
                 </div>
             )}
 
-            {/* Custom Overlay Controls */}
+            {/* Custom Overlay Controls - Simple Fullscreen */}
             <div className={`absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 transition-all duration-300 transform ${showControls ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
                 <div className="flex items-center justify-between text-white">
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); toggleMute(); }}
-                            className="hover:text-indigo-400 transition hover:bg-white/10 p-2 rounded-full"
-                        >
-                            {isMuted ? <IconVolumeOff size={24} /> : <IconVolume size={24} />}
-                        </button>
-                    </div>
+                    {/* Empty left side to push fullscreen to right */}
+                    <div></div>
 
                     <div className="flex items-center gap-4">
                         <button
@@ -188,6 +232,6 @@ const CustomVideoPlayer: React.FC<CustomVideoPlayerProps> = ({ videoId }) => {
             </div>
         </div>
     );
-};
+});
 
 export default CustomVideoPlayer;
