@@ -403,9 +403,9 @@ const MeetingRoom: React.FC = () => {
 
             {/* --- Participants Drawer --- */}
             {showParticipants && (
-                <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setShowParticipants(false)} />
+                <div className="fixed inset-0 bg-black/50 z-40 md:hidden animate-in fade-in" onClick={() => setShowParticipants(false)} />
             )}
-            <aside className={`fixed inset-y-0 right-0 w-80 bg-gray-900 border-l border-gray-800 z-50 transform transition-transform duration-300 ease-in-out ${showParticipants ? 'translate-x-0' : 'translate-x-full'}`}>
+            <aside className={`fixed inset-y-0 right-0 w-[85vw] md:w-80 bg-gray-900 border-l border-gray-800 z-50 transform transition-transform duration-300 ease-in-out ${showParticipants ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-800/50">
                     <h3 className="font-bold flex items-center gap-2"><IconUsers size={20} className="text-indigo-400" /> Participants ({participants.length})</h3>
                     <button onClick={() => setShowParticipants(false)} className="text-gray-400 hover:text-white"><IconX /></button>
@@ -429,8 +429,10 @@ const MeetingRoom: React.FC = () => {
                                         </div>
                                     </div>
                                     {isHost && p.role === 'co-host' && (
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleHostAction('demote-to-user', p.id)} className="text-xs text-red-400 hover:text-red-300 border border-red-900/50 bg-red-900/10 px-2 py-1 rounded">Remove Co-host</button>
+                                        <div className="md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                            <button onClick={() => handleHostAction('demote-to-user', p.id)} className="text-[10px] font-bold text-red-400 hover:text-red-300 border border-red-600/30 bg-red-500/10 hover:bg-red-500/20 px-2 py-1 rounded transition whitespace-nowrap">
+                                                Revoke Co-host
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -452,11 +454,15 @@ const MeetingRoom: React.FC = () => {
                                         {canModerate && (
                                             <>
                                                 {p.canProduceAudio ? (
-                                                    <button onClick={() => handleHostAction('revoke-audio', p.id)} className="p-1 text-emerald-400 hover:text-red-400" title="Revoke Mic"><IconMicrophone size={16} /></button>
+                                                    <button onClick={() => handleHostAction('revoke-audio', p.id)} className="p-1.5 bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400 rounded transition" title="Mic is ON. Click to Mute.">
+                                                        <IconMicrophone size={16} />
+                                                    </button>
                                                 ) : (
-                                                    <button onClick={() => handleHostAction('grant-audio', p.id)} className="p-1 text-gray-500 hover:text-emerald-400" title="Grant Mic"><IconMicrophoneOff size={16} /></button>
+                                                    <button onClick={() => handleHostAction('grant-audio', p.id)} className="p-1.5 bg-gray-700 text-gray-400 hover:bg-green-500/20 hover:text-green-400 rounded transition" title="Mic is OFF. Click to Allow.">
+                                                        <IconMicrophoneOff size={16} />
+                                                    </button>
                                                 )}
-                                                <button onClick={() => handleHostAction('lower-hand', p.id)} className="text-[10px] text-yellow-500 hover:text-yellow-400 underline">Lower</button>
+                                                <button onClick={() => handleHostAction('lower-hand', p.id)} className="text-[10px] text-yellow-500 hover:text-yellow-400 underline ml-1">Lower</button>
                                             </>
                                         )}
                                     </div>
@@ -481,13 +487,15 @@ const MeetingRoom: React.FC = () => {
                                     <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                                         {/* Main Host can Make Co-host */}
                                         {isHost && (
-                                            <button onClick={() => handleHostAction('promote-to-cohost', p.id)} className="p-1 text-indigo-400 hover:text-indigo-300" title="Make Co-host"><IconCrown size={16} /></button>
+                                            <button onClick={() => handleHostAction('promote-to-cohost', p.id)} className="px-2 py-1 text-[10px] bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/40 rounded transition flex items-center gap-1 whitespace-nowrap" title="Promote to Co-host">
+                                                <IconCrown size={12} /> Make Co-host
+                                            </button>
                                         )}
                                         {/* Mic Controls for everyone */}
                                         {p.canProduceAudio ? (
-                                            <button onClick={() => handleHostAction('revoke-audio', p.id)} className="p-1 text-emerald-400 hover:text-red-400" title="Revoke Mic Access"><IconMicrophone size={16} /></button>
+                                            <button onClick={() => handleHostAction('revoke-audio', p.id)} className="p-1.5 bg-green-500/20 text-green-400 hover:bg-red-500/20 hover:text-red-400 rounded transition" title="Mic is ON. Click to Mute."><IconMicrophone size={16} /></button>
                                         ) : (
-                                            <button onClick={() => handleHostAction('grant-audio', p.id)} className="p-1 text-gray-500 hover:text-emerald-400" title="Grant Mic Access"><IconMicrophoneOff size={16} /></button>
+                                            <button onClick={() => handleHostAction('grant-audio', p.id)} className="p-1.5 bg-gray-700 text-gray-400 hover:bg-green-500/20 hover:text-green-400 rounded transition" title="Mic is OFF. Click to Allow."><IconMicrophoneOff size={16} /></button>
                                         )}
                                         <button onClick={() => handleHostAction('kick', p.id)} className="p-1 text-red-500 hover:text-red-400" title="Kick User"><IconX size={16} /></button>
                                     </div>
@@ -571,7 +579,8 @@ const MeetingRoom: React.FC = () => {
 
             {/* --- Main Content --- */}
             <div className="pt-16 flex flex-col md:flex-row h-[100dvh] overflow-hidden">
-                <div className="w-full md:flex-1 bg-black relative flex flex-col justify-center overflow-hidden h-full">
+                {/* Video Section: Auto height on mobile (aspect-video), Full height/flex-1 on Desktop */}
+                <div className="w-full md:flex-1 bg-black relative flex flex-col justify-center overflow-hidden shrink-0 md:h-full">
                     <div className="w-full aspect-video md:h-full md:w-full md:aspect-auto relative">
                         <CustomVideoPlayer videoId={meeting.youtubeId} />
                         {/* Controls Overlay */}
@@ -593,7 +602,8 @@ const MeetingRoom: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="flex-1 md:flex-none md:w-[400px] bg-gray-900 border-l border-gray-800 flex flex-col min-h-0 relative z-0 shadow-xl">
+                {/* Broadcast/Chat Section: Fills remaining space on mobile */}
+                <div className="flex-1 md:flex-none md:w-[400px] bg-gray-900 border-t md:border-t-0 md:border-l border-gray-800 flex flex-col min-h-0 relative z-0 shadow-xl">
                     <div className="p-3 border-b border-gray-800 bg-gray-800/30 flex items-center justify-between shrink-0">
                         <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1"><IconMessage size={14} /> Live Broadcasts</h3>
                         <span className="text-[10px] bg-red-500/10 text-red-400 px-2 py-0.5 rounded-full border border-red-500/20 animate-pulse">LIVE</span>

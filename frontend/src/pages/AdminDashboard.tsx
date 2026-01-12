@@ -20,6 +20,13 @@ const AdminDashboard: React.FC = () => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
 
+    // Redirect if not logged in
+    useEffect(() => {
+        if (!user) {
+            navigate('/login');
+        }
+    }, [user, navigate]);
+
     // Data State
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [loading, setLoading] = useState(true);
@@ -148,8 +155,19 @@ const AdminDashboard: React.FC = () => {
 
     // Helpers
     const extractYoutubeId = (urlOrId: string) => {
-        const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/.*v=|embed\/|v\/)([^#&?]*)/);
-        return match ? match[1] : urlOrId;
+        // Handle full Iframe tag
+        if (urlOrId.includes('<iframe')) {
+            const srcMatch = urlOrId.match(/src=["'](.*?)["']/);
+            if (srcMatch && srcMatch[1]) {
+                urlOrId = srcMatch[1];
+            }
+        }
+
+        // Handle various YouTube URL formats
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w+\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = urlOrId.match(regExp);
+
+        return (match && match[2].length === 11) ? match[2] : urlOrId;
     };
 
     const copyLink = (id: string) => {
