@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config';
 import { useNavigate } from 'react-router-dom';
 import {
     IconLayoutDashboard, IconPlus, IconVideo, IconTrash, IconEdit, IconCopy,
@@ -36,7 +37,7 @@ const AdminDashboard: React.FC = () => {
     // Fetch existing meetings
     const fetchMeetings = async () => {
         try {
-            const res = await fetch('http://localhost:5000/api/meetings');
+            const res = await fetch(`${API_BASE_URL}api/meetings`);
             const data = await res.json();
             setMeetings(data);
         } catch (err) {
@@ -56,7 +57,7 @@ const AdminDashboard: React.FC = () => {
         setCreateLoading(true);
         try {
             const token = user?.token || localStorage.getItem('token');
-            const res = await fetch('http://localhost:5000/api/meetings', {
+            const res = await fetch(`${API_BASE_URL}api/meetings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -90,7 +91,7 @@ const AdminDashboard: React.FC = () => {
 
         try {
             const token = user?.token || localStorage.getItem('token');
-            const res = await fetch(`http://localhost:5000/api/meetings/${editingMeeting._id}`, {
+            const res = await fetch(`${API_BASE_URL}api/meetings/${editingMeeting._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -126,7 +127,7 @@ const AdminDashboard: React.FC = () => {
 
         try {
             const token = user?.token || localStorage.getItem('token');
-            const res = await fetch(`http://localhost:5000/api/meetings/${id}`, {
+            const res = await fetch(`${API_BASE_URL}api/meetings/${id}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

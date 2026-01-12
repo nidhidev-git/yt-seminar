@@ -31,6 +31,7 @@ interface Meeting {
     producers: Map<string, Producer>; // producerId -> Producer
     consumers: Map<string, Consumer>; // consumerId -> Consumer
     transports: Map<string, WebRtcTransport>; // transportId -> Transport
+    allowedSpeakerIds: string[]; // Persist audio permissions by User ID
 }
 
 // In-memory storage
@@ -59,7 +60,8 @@ export const meetingSocketHandler = (io: Server) => {
                         broadcasts: dbMeeting?.broadcasts.map(b => ({ name: b.senderName, message: b.message, timestamp: b.timestamp })) || [],
                         producers: new Map(),
                         consumers: new Map(),
-                        transports: new Map()
+                        transports: new Map(),
+                        allowedSpeakerIds: []
                     };
                     // Init Router for new room
                     try {
@@ -91,7 +93,7 @@ export const meetingSocketHandler = (io: Server) => {
                         name,
                         role: effectiveRole,
                         isHandRaised: false,
-                        canProduceAudio: effectiveRole === 'host' || effectiveRole === 'co-host'
+                        canProduceAudio: effectiveRole === 'host' || effectiveRole === 'co-host' || (userId && meeting.allowedSpeakerIds.includes(userId)) || false
                     });
                 }
 
@@ -316,11 +318,17 @@ export const meetingSocketHandler = (io: Server) => {
             }
             else if (action === 'grant-audio') {
                 target.canProduceAudio = true;
+                if (target.userId && !meeting.allowedSpeakerIds.includes(target.userId)) {
+                    meeting.allowedSpeakerIds.push(target.userId);
+                }
                 io.to(roomId).emit('update-users', meeting.participants);
                 io.to(targetId).emit('remote-audio-permission', { canProduce: true });
             }
             else if (action === 'revoke-audio') {
                 target.canProduceAudio = false;
+                if (target.userId) {
+                    meeting.allowedSpeakerIds = meeting.allowedSpeakerIds.filter(id => id !== target.userId);
+                }
                 io.to(roomId).emit('update-users', meeting.participants);
                 io.to(targetId).emit('remote-audio-permission', { canProduce: false });
             }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { API_BASE_URL } from '../config';
 import { Navigate } from 'react-router-dom';
 
 const Login: React.FC = () => {
@@ -15,7 +16,7 @@ const Login: React.FC = () => {
 
         if (formData.email && formData.password) {
             try {
-                const res = await fetch('http://localhost:5000/api/auth/login', {
+                const res = await fetch(`${API_BASE_URL}api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: formData.email, password: formData.password })

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { API_BASE_URL } from '../config';
 import PollModal from '../components/PollModal';
 import CustomVideoPlayer from '../components/CustomVideoPlayer';
 import socketService from '../services/socket';
@@ -185,7 +186,7 @@ const MeetingRoom: React.FC = () => {
     useEffect(() => {
         const fetchMeeting = async () => {
             try {
-                const res = await fetch(`http://localhost:5000/api/meetings/${id}`);
+                const res = await fetch(`${API_BASE_URL}api/meetings/${id}`);
                 if (res.ok) {
                     const data = await res.json();
                     setMeeting(data);
@@ -569,14 +570,18 @@ const MeetingRoom: React.FC = () => {
             )}
 
             {/* --- Main Content --- */}
-            <div className="pt-16 flex flex-col md:flex-row h-screen">
-                <div className="w-full md:flex-1 bg-black relative flex flex-col justify-center overflow-hidden">
+            <div className="pt-16 flex flex-col md:flex-row h-[100dvh] overflow-hidden">
+                <div className="w-full md:flex-1 bg-black relative flex flex-col justify-center overflow-hidden h-full">
                     <div className="w-full aspect-video md:h-full md:w-full md:aspect-auto relative">
                         <CustomVideoPlayer videoId={meeting.youtubeId} />
                         {/* Controls Overlay */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-4">
-                            <button onClick={toggleMic} className={`pointer-events-auto w-12 h-12 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition transform hover:scale-105 ${isMicOn ? 'bg-indigo-600 text-white' : 'bg-gray-800 text-red-500'}`}>
-                                {isMicOn ? <IconMicrophone size={24} /> : <IconMicrophoneOff size={24} />}
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none z-20 flex gap-4 items-center">
+                            <button
+                                onClick={toggleMic}
+                                className={`pointer-events-auto w-14 h-14 rounded-full flex items-center justify-center font-bold text-sm shadow-lg transition-all transform hover:scale-105 active:scale-95 border-2 ${isMicOn ? 'bg-emerald-600 border-emerald-400 text-white shadow-emerald-500/50' : 'bg-red-600 border-red-400 text-white shadow-red-500/50'}`}
+                                title={isMicOn ? "Mute Microphone" : "Unmute Microphone"}
+                            >
+                                {isMicOn ? <IconMicrophone size={28} /> : <IconMicrophoneOff size={28} />}
                             </button>
 
                             {!isHost && (

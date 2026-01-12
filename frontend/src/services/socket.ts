@@ -5,7 +5,12 @@ class SocketService {
 
     connect() {
         if (!this.socket) {
-            this.socket = io('http://localhost:5000'); // Configure for prod later
+            // Use relative path so it respects the domain/proxy
+            // If dev, Vite proxy or manuall override can be used.
+            const url = import.meta.env.VITE_API_URL || '/';
+            this.socket = io(url, {
+                path: '/socket.io'
+            });
         }
         return this.socket;
     }

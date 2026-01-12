@@ -28,8 +28,8 @@ class MediasoupService {
         try {
             this.worker = await mediasoup.createWorker({
                 logLevel: 'warn',
-                rtcMinPort: 10000,
-                rtcMaxPort: 10100, // Small range for dev; expand for prod
+                rtcMinPort: Number(process.env.MEDIASOUP_MIN_PORT) || 40000,
+                rtcMaxPort: Number(process.env.MEDIASOUP_MAX_PORT) || 40100,
             });
 
             this.worker.on('died', () => {
@@ -58,8 +58,9 @@ class MediasoupService {
     public async createWebRtcTransport(router: Router) {
         // Optimization: Explicitly undefined IPs let Mediasoup detect interface (OK for local dev)
         // For Prod: Must specify listenIps
+        const announcedIp = process.env.MEDIASOUP_ANNOUNCED_IP || '127.0.0.1';
         const transport = await router.createWebRtcTransport({
-            listenIps: [{ ip: '0.0.0.0', announcedIp: '127.0.0.1' }], // DEV ONLY
+            listenIps: [{ ip: '0.0.0.0', announcedIp }],
             enableUdp: true,
             enableTcp: true,
             preferUdp: true,
