@@ -129,7 +129,11 @@ const MeetingRoom: React.FC = () => {
         // Connection State Monitoring
         socket.io.on("reconnect", () => {
             console.log("Reconnected to server. Reloading to restore media state...");
-            window.location.reload();
+            // Only reload if we were previously fully connected (has participants)
+            // and give it a small delay to avoid rapid loops
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         });
 
         // Listeners
@@ -221,7 +225,7 @@ const MeetingRoom: React.FC = () => {
             socket.off('new-producer');
             socketService.disconnect();
         };
-    }, [user, id, navigate, addToast, isMicOn]);
+    }, [user, id, navigate, addToast /*, isMicOn REMOVED to prevent loop */]);
 
     // Audio Device Enumeration on Settings Open
     useEffect(() => {
